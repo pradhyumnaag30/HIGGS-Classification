@@ -5,10 +5,16 @@ This project implements and evaluates a range of practical machine-learning mode
 | Model Type         | Model                      | ROC-AUC | PR-AUC | Accuracy |
 |--------------------|----------------------------|--------:|-------:|---------:|
 | Deep Neural Network| Deep Residual MLP (SwiGLU) | **0.88525** | **0.89509** | **0.79986** |
+
 # **Dataset Citation**
+
+> [HIGGS - UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/280/higgs)
+
+# **Introductory Paper**
 
 > Baldi P. et al., “Searching for Exotic Particles in High-Energy Physics with Deep Learning.” 2014.
 > [https://arxiv.org/abs/1402.4735](https://arxiv.org/abs/1402.4735)
+
 # **Dataset Overview**
 
 The **HIGGS dataset** contains **11 million simulated proton–proton collision events**, each represented by **28 features** and a **binary label** indicating whether the event corresponds to a Higgs boson decay signal (`1`) or background process (`0`).
