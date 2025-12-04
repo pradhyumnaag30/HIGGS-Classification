@@ -1,10 +1,32 @@
-# **Building Practical Machine Learning Models on the HIGGS Dataset**
-This project implements and evaluates a range of practical machine-learning models on the HIGGS dataset, with the goal of identifying the strongest-performing approach for the `binary classification` task.
+# **Large-Scale ML Modeling on the HIGGS Dataset**
+
+The HIGGS dataset is a simulated particle-physics benchmark containing **11 million collision events**.
+Each event is represented by **28 physics features**, and the task is to classify whether it corresponds to a **simulated Higgs boson signal** or **background noise**.
+
+Although the dataset is simulated, the classification problem is genuinely challenging: the numerical features for signal and background events **overlap heavily**, making the decision boundary subtle and fully dependent on statistical patterns.
+
+From a machine-learning perspective, the dataset is valuable because it provides:
+
+* a **large-scale binary classification task** suitable for realistic benchmarking
+* moderately imbalanced classes
+* high overlap between feature distributions
+* a test of model efficiency and scalability on multi-million-row tabular data
+
+This project builds and compares several practical ML pipelines—from tuned tree-based models (LightGBM, XGBoost) to a deep residual MLP—to evaluate what modeling strategies achieve the best performance at scale.
+
 # ⭐ **Results Summary**
 
-| Model Type         | Model                      | ROC-AUC | PR-AUC | Accuracy |
-|--------------------|----------------------------|--------:|-------:|---------:|
-| Deep Neural Network| Deep Residual MLP (SwiGLU) | **0.88525** | **0.89509** | **0.79986** |
+| Model                                                 | ROC-AUC     | PR-AUC      | Accuracy    |
+| ----------------------------------------------------- | ----------- | ----------- | ----------- |
+| **Deep MLP**                                          | **0.88525** | **0.89509** | **0.79986** |
+| LightGBM (Tuned with Optuna)                          | 0.85187     | 0.86425     | 0.76760     |
+| XGBoost (Tuned with Optuna)                           | 0.84888     | 0.86128     | 0.76466     |
+| Top-20 Features + XGBoost                             | 0.84791     | 0.86070     | 0.76413     |
+| Autoencoder + LightGBM                                | 0.83908     | 0.85226     | 0.75568     |
+| Physics-Engineered Features Model (Tuned with Optuna) | 0.83785     | 0.85069     | 0.75463     |
+| Top-20 Features + LightGBM                            | 0.83768     | 0.85112     | 0.75447     |
+| LightGBM (Untuned)                                    | 0.83434     | 0.84782     | 0.75130     |
+| XGBoost (Untuned)                                     | 0.83000     | 0.84351     | 0.74779     |
 
 # **Dataset Citation**
 
@@ -24,25 +46,28 @@ The **HIGGS dataset** contains **11 million simulated proton–proton collision 
 * **21 low-level physics features**
 * **7 high-level engineered features** derived from particle combinations
 * All features are **continuous**
-* Labels are **balanced enough** that ROC-AUC is a meaningful primary metric. (5188260 from `class 0` vs 5811740 from `class 1`)
+* ROC-AUC remains a reliable primary metric for this dataset because it is insensitive to class imbalance, and HIGGS has only a mild class skew (53% vs 47%).
+
 # **Dataset Construction**
 
-All experiments use a cleaned version of the original `HIGGS.csv`, created by a small preprocessing script. The script is designed to work with the **full 11M rows by default**, but can be configured to produce a smaller, class-balanced subset by changing `TARGET_ROWS`. It standardizes the column naming, parses the `label` column defensively, uses chunked reading to handle large `TARGET_ROWS` sizes, samples the required number of events per class, restores the original physics feature names, and finally writes the resulting dataset to `HIGGS_short.csv`.
+All experiments use a cleaned version of the original `HIGGS.csv`, created by a small preprocessing script. The script is designed to work with the **full 11M rows by default**, but can be configured to produce a smaller subset while preserving the original class distribution by changing `TARGET_ROWS`. It standardizes the column naming, parses the `label` column defensively, uses chunked reading to handle large `TARGET_ROWS` sizes, samples the required number of events per class, restores the original physics feature names, and finally writes the resulting dataset to `HIGGS_short.csv`.
+
 # **Model Comparison**
 
-| Model                               | ROC-AUC | PR-AUC | Accuracy |
-|-------------------------------------|---------|--------|----------|
-| LightGBM (Untuned)                  | 0.83434 | 0.84782| 0.75130  |
-| XGBoost (Untuned)                   | 0.83000 | 0.84351| 0.74779  |
-| Autoencoder + LightGBM              | 0.83908 | 0.85226| 0.75568  |
-| Top-20 Features + LightGBM          | 0.83768 | 0.85112| 0.75447  |
-| Top-20 Features + XGBoost           | 0.84791 | 0.86070| 0.76413  |
-| LightGBM (Tuned with Optuna)        | 0.85187 | 0.86425| 0.76760  |
-| XGBoost (Tuned with Optuna)         | 0.84888 | 0.86128| 0.76466  |
+| Model                               | ROC-AUC | PR-AUC  | Accuracy |
+|-------------------------------------|---------|---------|----------|
+| LightGBM (Untuned)                  | 0.83434 | 0.84782 | 0.75130  |
+| XGBoost (Untuned)                   | 0.83000 | 0.84351 | 0.74779  |
+| Autoencoder + LightGBM              | 0.83908 | 0.85226 | 0.75568  |
+| Top-20 Features + LightGBM          | 0.83768 | 0.85112 | 0.75447  |
+| Top-20 Features + XGBoost           | 0.84791 | 0.86070 | 0.76413  |
+| LightGBM (Tuned with Optuna)        | 0.85187 | 0.86425 | 0.76760  |
+| XGBoost (Tuned with Optuna)         | 0.84888 | 0.86128 | 0.76466  |
 | Physics-Engineered Features Model (Tuned with Optuna)   | 0.83785 | 0.85069| 0.75463  |
 | **Deep MLP**                        | **0.88525**   | **0.89509**  | **0.79986**    |
 
 The Deep MLP consistently outperformed all classical ML baselines across ROC-AUC, PR-AUC, and overall accuracy. We use a **70 / 15 / 15 split**, created with `train_test_split` and a **fixed `random_state=42`** to ensure all models are trained and evaluated on the **exact same data partitions**. This guarantees that differences in performance come from the models themselves—not from different data splits.
+
 # **Model Explanation**
 
 * **LightGBM (Untuned)** – Baseline LightGBM classifier using simple, non-tuned parameters (`num_leaves=64`, `learning_rate=0.05`). Serves as a strong first benchmark and provides feature importance rankings used later for subset experiments.
@@ -60,6 +85,7 @@ The Deep MLP consistently outperformed all classical ML baselines across ROC-AUC
 * **XGBoost (Tuned)** – Similar 5-trial Optuna optimization of XGBoost hyperparameters (depth, child weight, sampling rates, L1/L2 regularization). Final model trained with **3000 rounds during tuning** and **5000 rounds for final training**, using `tree_method="hist"`.
 
 * **Physics-Engineered Features + LightGBM** – LightGBM trained on the 28 original variables plus 7 engineered high-level physics features (simple combinations inspired by domain literature). Tuned with a small Optuna search (5 trials) and trained with early stopping.
+
 # **Deep MLP Model**
 
 This section describes the final neural model used in the benchmark — a deep residual MLP designed to train efficiently on the full 11M-row HIGGS dataset.
@@ -135,6 +161,7 @@ EMA produced slightly more stable test scores, especially late in training.
 * EMA further reduces run-to-run variance.
 
 This consistency demonstrates the model’s reliability on large-scale tabular physics data.
+
 # **How to Use This Repository**
 
 ### **1. Install dependencies**
@@ -165,7 +192,7 @@ and modify:
 TARGET_ROWS = <desired number>
 ```
 
-The script will sample a class-balanced subset and save:
+This script generates a proportionally identical downsampled subset of the HIGGS dataset, preserving the original class distribution and save:
 
 ```
 HIGGS_short.csv
